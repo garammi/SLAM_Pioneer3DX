@@ -1,70 +1,90 @@
-# EKF-based GPS & ZED2 Sensor Fusion for Outdoor SLAM (No LiDAR)
+# EKF-Based Local SLAM Without LiDAR
 
-This repository implements a lightweight, mapless SLAM system using only GPS and ZED2 visual odometry data. It uses ROS Noetic and `robot_localization`'s EKF node to perform sensor fusion and generate a robust local trajectory estimate. The goal is to achieve reliable position estimation in outdoor environments without a global map or LiDAR, by intelligently combining complementary sensor modalities.
-
----
-
-## Project Overview
-
-### Objective
-- Perform local pose estimation based solely on ZED2 and GPS data.
-- Avoid reliance on external maps or LiDAR.
-- Apply Extended Kalman Filter (EKF) to fuse visual odometry and GPS for trajectory smoothing and noise reduction.
-- Visualize and evaluate trajectory in Google Earth via `.kml` export.
-
-### Background
-- ZED2 camera: Provides dense local odometry, but drifts over time.
-- RTK GPS: Offers absolute positioning but is subject to jitter/noise.
-- By aligning ZED's smooth odometry with GPS's global correctness, the system seeks to produce a reliable fused trajectory in outdoor settings like a campus.
+This repository demonstrates an implementation of local SLAM (Simultaneous Localization and Mapping) using only GPS and ZED stereo camera data without relying on LiDAR or a global map. The goal is to perform robust localization through sensor fusion using an Extended Kalman Filter (EKF).
 
 ---
 
-## File Structure
+##  Project Overview
 
-ekf/
-├── ekf.yaml # Configuration for EKF node (sensor usage, frames, etc.)
-├── ekf_replay.launch # Launch file for robot_localization with parameter loading
-├── zed_gps_replay.py # CSV-based odometry publisher for ZED and GPS data
-├── gps_odom.csv # Cleaned GPS trajectory (UTM + offset)
-├── zed_odom.csv # Cleaned and aligned ZED odometry
+In autonomous systems, especially in GPS-denied or partially observable environments, accurate localization is a challenge. In this project, we address this by fusing:
 
+- **Visual odometry** (from ZED camera)
+- **GPS odometry** (from RTK-GPS)
 
----
-
-## System Architecture
-
-[gps_odom.csv] --> /gps/odom ------
---> ekf_localization_node --> /odometry/filtered
-[zed_odom.csv] --> /zed/odom ------/
-
-
-- The `zed_gps_replay.py` script loads time-synchronized CSVs and publishes odometry messages at 10 Hz.
-- EKF fuses `/gps/odom` and `/zed/odom` and publishes the estimated pose on `/odometry/filtered`.
-- No map or loop closure is involved. This is purely a local trajectory estimation process.
+We use `robot_localization`'s `ekf_localization_node` to fuse these two sources and validate the resulting `/odometry/filtered` output.
 
 ---
 
-## How to Run
+##  File Structure
 
-1. Clone this repo and build your workspace:
+```
+ekf_local_slam/
+├── data/
+│   ├── gps_cleaned.csv         # Preprocessed GPS odometry (x, y, timestamp)
+│   ├── zed_cleaned.csv         # Preprocessed ZED odometry (x, y, timestamp)
+│   └── filtered.csv            # Output of EKF fused odometry
+│
+├── launch/
+│   └── ekf_localization.launch # Launches ekf_localization_node with config
+│
+├── config/
+│   └── ekf.yaml                # Configuration file for sensor fusion
+│
+├── scripts/
+│   └── zed_gps_replay.py       # Publishes GPS and ZED odometry from CSV
+│
+├── README.md                   # This file
+```
+
+---
+
+##  How to Run
+
+1. **Prepare ROS Environment**
+
 ```bash
-cd ~/catkin_ws/src
-git clone https://github.com/your_id/SLAM_Pioneer3DX.git
-cd ..
-catkin_make
-source devel/setup.bash
-Launch the EKF node:
+source /opt/ros/noetic/setup.bash
+cd ekf_local_slam
+```
 
+2. **Launch EKF Node**
 
-roslaunch ekf ekf_replay.launch
-Run the replay node in another terminal:
+```bash
+roslaunch launch/ekf_localization.launch
+```
 
+3. **Replay Odometry Data**
 
-rosrun ekf zed_gps_replay.py
-(Optional) Log filtered results:
+```bash
+rosrun scripts zed_gps_replay.py
+```
 
+4. **Record Fused Output**
 
-rostopic echo -p /odometry/filtered > filtered.csv
-Convert to .kml for Google Earth:
-Use Python or any online tool to convert filtered.csv (UTM) to WGS84 coordinates and save as .kml.
+```bash
+rostopic echo -p /odometry/filtered > data/filtered.csv
+```
 
+---
+
+##  Key Parameters in `ekf.yaml`
+
+- `odom0`: /zed/odom
+- `gps0`: /gps/odom
+- Relative weighting can be tuned by adjusting `odom0_config` and `gps0_config`
+
+---
+
+##  Notes
+
+- This SLAM method operates purely on local odometry.
+- No global map or LiDAR is used.
+- Accuracy depends on time synchronization and data quality of GPS/ZED.
+
+---
+
+##  References
+
+- [robot_localization package](http://wiki.ros.org/robot_localization)
+- ZED Camera ROS Wrapper
+- RTK-GPS Data Logger
