@@ -2,7 +2,6 @@
 
 This repository demonstrates an implementation of local SLAM (Simultaneous Localization and Mapping) using only GPS and ZED stereo camera data without relying on LiDAR or a global map. The goal is to perform robust localization through sensor fusion using an Extended Kalman Filter (EKF).
 
----
 
 ##  Project Overview
 
@@ -13,7 +12,7 @@ In autonomous systems, especially in GPS-denied or partially observable environm
 
 We use `robot_localization`'s `ekf_localization_node` to fuse these two sources and validate the resulting `/odometry/filtered` output.
 
----
+
 
 ##  File Structure
 
@@ -36,7 +35,7 @@ ekf_local_slam/
 ├── README.md                   # This file
 ```
 
----
+
 
 ##  How to Run
 
@@ -65,7 +64,7 @@ rosrun scripts zed_gps_replay.py
 rostopic echo -p /odometry/filtered > data/filtered.csv
 ```
 
----
+
 
 ##  Key Parameters in `ekf.yaml`
 
@@ -73,7 +72,7 @@ rostopic echo -p /odometry/filtered > data/filtered.csv
 - `gps0`: /gps/odom
 - Relative weighting can be tuned by adjusting `odom0_config` and `gps0_config`
 
----
+
 
 ##  Notes
 
@@ -81,7 +80,7 @@ rostopic echo -p /odometry/filtered > data/filtered.csv
 - No global map or LiDAR is used.
 - Accuracy depends on time synchronization and data quality of GPS/ZED.
 
----
+
 
 ##  References
 
