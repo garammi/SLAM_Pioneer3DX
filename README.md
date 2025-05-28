@@ -20,8 +20,8 @@ We use `robot_localization`'s `ekf_localization_node` to fuse these two sources 
 ```
 ekf_local_slam/
 ├── data/
-│   ├── gps_cleaned.csv         # Preprocessed GPS odometry (x, y, timestamp)
-│   ├── zed_cleaned.csv         # Preprocessed ZED odometry (x, y, timestamp)
+│   ├── gps_odom.csv         # Preprocessed GPS odometry (x, y, timestamp)
+│   ├── zed_odom.csv         # Preprocessed ZED odometry (x, y, timestamp)
 │   └── filtered.csv            # Output of EKF fused odometry
 │
 ├── launch/
